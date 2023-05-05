@@ -5,5 +5,5 @@ import com.pichincha.backend.apirest.models.entity.ClientePK;
 import org.springframework.data.repository.CrudRepository;
 
 public interface ClienteDao extends CrudRepository<Cliente, ClientePK> {
-
+    
 }

@@ -7,18 +7,18 @@ import java.util.List;
 @Table(name = "clientes")
 public class Cliente extends Persona {
     @EmbeddedId
-    private ClientePK id;
+    private ClientePK clientePK;
     private String contrasena;
     private Boolean estado;
     @OneToMany(mappedBy = "cliente", cascade = CascadeType.ALL)
     private List<Cuenta> cuentas;
 
-    public ClientePK getId() {
-        return id;
+    public ClientePK getClientePK() {
+        return clientePK;
     }
 
-    public void setId(ClientePK id) {
-        this.id = id;
+    public void setClientePK(ClientePK clientePK) {
+        this.clientePK = clientePK;
     }
 
     public String getContrasena() {

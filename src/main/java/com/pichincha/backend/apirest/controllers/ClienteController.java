@@ -1,6 +1,5 @@
 package com.pichincha.backend.apirest.controllers;
 
-
 import com.pichincha.backend.apirest.models.entity.Cliente;
 import com.pichincha.backend.apirest.models.entity.ClientePK;
 import com.pichincha.backend.apirest.models.entity.Persona;
@@ -11,20 +10,28 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
+
     @Autowired
     private IClienteService clienteService;
+
     @GetMapping("/listar")
     public ResponseEntity<List<Cliente>> findAll() {
         return new ResponseEntity<>(clienteService.findAll(), HttpStatus.OK);
     }
-    @GetMapping("/ver/{id}")
+    @GetMapping("/listarByIdPersona/{idPersona}")
+    public ResponseEntity<List<Cliente>> findAllByIdPersona(@PathVariable("idPersona") Long idPersona) {
+        return new ResponseEntity<>(clienteService.findByClientePKIdPersona(idPersona), HttpStatus.OK);
+    }
+
+    /* @GetMapping("/ver/{id}")
     public ResponseEntity<Cliente> findById(@PathVariable("id")ClientePK id) {
         return new ResponseEntity<>(clienteService.findById(id), HttpStatus.OK);
-    }
+    }*/
     @PostMapping("/guardar")
     public ResponseEntity<Cliente> save(@RequestBody Cliente cliente) {
         Persona persona = new Persona();
@@ -36,32 +43,51 @@ public class ClienteController {
         persona.setTelefono(cliente.getTelefono());
 
         ClientePK pk = new ClientePK();
-        pk.setIdCliente(cliente.getId() != null ? cliente.getId().getIdCliente() : null);
-        pk.setIdPersona(cliente.getId() != null ? cliente.getId().getIdPersona() : null);
+        System.out.println("clienteID:" + cliente.getClientePK());
+        pk.setIdCliente(cliente.getClientePK() != null ? cliente.getClientePK().getIdCliente() : null);
+        pk.setIdPersona(cliente.getClientePK() != null ? cliente.getClientePK().getIdPersona() : null);
 
-        cliente.setId(pk);
+        System.out.println("pk:" + pk.toString());
+        cliente.setClientePK(pk);
         cliente.setContrasena(cliente.getContrasena());
         cliente.setEstado(true);
 
         return new ResponseEntity<>(clienteService.save(cliente), HttpStatus.CREATED);
     }
-    @PutMapping("/actualizar/{id}")
-    public ResponseEntity<Cliente> update(@RequestBody Cliente cliente, @PathVariable("id") ClientePK id) {
-        Cliente clienteActual = clienteService.findById(id);
-        clienteActual.setIdentificacion(cliente.getIdentificacion());
-        clienteActual.setNombre(cliente.getNombre());
-        clienteActual.setGenero(cliente.getGenero());
-        clienteActual.setEdad(cliente.getEdad());
-        clienteActual.setDireccion(cliente.getDireccion());
-        clienteActual.setTelefono(cliente.getTelefono());
-        clienteActual.setContrasena(cliente.getContrasena());
-        clienteActual.setEstado(cliente.getEstado());
-        return new ResponseEntity<>(clienteService.save(clienteActual), HttpStatus.CREATED);
+
+    @PutMapping("/actualizar/{idPersona}/{idCliente}")
+    public ResponseEntity<Cliente> update(@RequestBody Cliente cliente, @PathVariable("idPersona") Long idPersona, @PathVariable("idCliente") Long idCliente) {
+        ClientePK pk = new ClientePK();
+        pk.setIdCliente(idCliente);
+        pk.setIdPersona(idPersona);
+        Optional<Cliente> opc = clienteService.findById(pk);
+        Cliente client = new Cliente();
+
+        return opc
+                .map(clienteActual -> {
+                   
+                    clienteActual.setIdentificacion(cliente.getIdentificacion());
+                    clienteActual.setNombre(cliente.getNombre());
+                    clienteActual.setGenero(cliente.getGenero());
+                    clienteActual.setEdad(cliente.getEdad());
+                    clienteActual.setDireccion(cliente.getDireccion());
+                    clienteActual.setTelefono(cliente.getTelefono());
+                    clienteActual.setContrasena(cliente.getContrasena());
+                    clienteActual.setEstado(cliente.getEstado());
+
+                    clienteService.save(client);
+                    return new ResponseEntity<>(clienteService.save(client), HttpStatus.CREATED);
+                })
+                .orElse(new ResponseEntity<Cliente>(HttpStatus.NOT_FOUND));
+
     }
 
-    @DeleteMapping("/borrar/{id}")
-    public ResponseEntity delete(@PathVariable("id") ClientePK id) {
-        if (clienteService.delete(id)) {
+    @DeleteMapping("/borrar/{idPersona}/{idCliente}")
+    public ResponseEntity delete(@PathVariable("idPersona") Long idPersona, @PathVariable("idCliente") Long idCliente) {
+         ClientePK pk = new ClientePK();
+        pk.setIdCliente(idCliente);
+        pk.setIdPersona(idPersona);
+        if (clienteService.delete(pk)) {
             return new ResponseEntity("Cliente eliminado correctamente", HttpStatus.OK);
         } else {
             return new ResponseEntity("No se pudo encontrar el cliente", HttpStatus.NOT_FOUND);
